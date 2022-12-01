@@ -1,0 +1,290 @@
+#!/bin/bash
+
+SCRIPT_DIR=$(cd $(dirname ${BASH_SOURCE[0]}); pwd)
+
+cd CPFE_Downloads
+
+ALL_FILE=$(ls -1 -F | grep -v [/$])
+
+[[ $ALL_FILE = "" ]]&&
+echo -e "\n\e[1;6;31;47mERROR: ARCHIVE NOT FOUND!\e[0m\n" && exit 1
+
+# echo -e "Your: \033[0;93m$ALL_FILE\033[0;0m"
+
+CHOOSE_FILE=(${ALL_FILE/ / }) # first file
+#CHOOSE_FILE=${CHOOSE_FILE[-1]} # last file
+SPLIT_MINUS=(${CHOOSE_FILE//-/ }) # no '-' ex:ChromeOS firmware R96 14164.0.0 brya.tar.bz2
+
+FILE_BOARD=${SPLIT_MINUS[-1]} #board ex:brya.tar.bz2
+FILE_BOARD_SPLIT=(${FILE_BOARD//./ }) # split board ex:brya
+[[ $FILE_BOARD_SPLIT = "stateful" ]]&& FILE_BOARD_SPLIT=${SPLIT_MINUS[-3]}
+
+LLAS_VER=${SPLIT_MINUS[-2]} # version ex:14164.0.0
+[[ $LLAS_VER = "lvm" ]]&& LLAS_VER=${SPLIT_MINUS[-4]}
+
+# LLAS_VER_SPLIT=(${LLAS_VER//./ }) # split version ex:14164
+
+# LLAS_VER_R=${SPLIT_MINUS[-3]} # R version ex:R96
+
+TYPE=${SPLIT_MINUS[1]} #Check type ex.test or firmware etc.
+[[ $TYPE = "lvm" ]]&& TYPE=${SPLIT_MINUS[4]}
+
+OnlyMoveChangeSplit(){
+	echo -e "\033[1;6;31;92mAhoy! Only MOvE!\033[0m"
+	SPLIT_MINUS=(${CHOOSE_FILE//-/ }) # no '-' ex:chromeos_14369.0.0_brya lvm stateful_factory_dev channel_brya premp v4.bin
+	SPLIT_BASELINE=(${SPLIT_MINUS//_/ }) # no '_' ex:chromeos 14369.0.0 brya
+	FILE_BOARD_SPLIT=${SPLIT_BASELINE[2]} # split board ex:brya
+	LLAS_VER=${SPLIT_BASELINE[1]} # version ex:14369.0.0
+
+	[[ ${SPLIT_BASELINE[3]} = "" ]]&&
+	SPLIT_BASELINE=(${SPLIT_MINUS[2]//_/ }) &&
+	TYPE="${SPLIT_BASELINE[1]^^}_IMAGE" ||
+	TYPE="${SPLIT_BASELINE[3]^^}_IMAGE"
+}
+
+case $TYPE in
+
+	# "not use")
+	# TYPE="RECOVERY_IMAGE"
+	# ;;
+
+	"hwqual")
+	TYPE="HWQUAL_IMAGE_ARCHIVE"
+	;;
+
+	"factory")
+	TYPE="FACTORY_IMAGE_ARCHIVE"
+	;;
+
+ 	"R"*)
+	TYPE="RELEASE_IMAGE_ARCHIVE"
+	;;
+
+	# "not use")
+	# TYPE="FACTORY_IMAGE"
+	# ;;
+
+	"test")
+	TYPE="TEST_IMAGE_ARCHIVE"
+	;;
+
+	"firmware")
+	TYPE="FIRMWARE_IMAGE_ARCHIVE"
+	;;
+
+	*"premp")
+	OnlyMoveChangeSplit
+	;;
+
+	*)
+	echo -e "\n\e[1;6;31;47mERROR: Error Document !\e[0m\n"
+	exit
+	;;
+
+esac
+
+echo -e "Unzip \033[1;96m'$CHOOSE_FILE'\033[0m "
+echo -e "also means type=\033[0;93m $TYPE \033[0m board=\033[0;93m $FILE_BOARD_SPLIT \033[0m version=\033[0;93m $LLAS_VER \033[0m ..."
+
+# printf "Please input your \033[1;96mBOARD\033[0m name: "
+# read BOARD
+# [[ $BOARD = "" ]]&& echo -e "\n\e[1;6;31;47mERROR: You need set BOARD !\e[0m\n" && exit 1
+BOARD=$1
+[[ $BOARD = "" ]]&& printf "Please input your \033[1;96mBOARD\033[0m name: "  && read BOARD
+
+case $FILE_BOARD_SPLIT in
+
+	"volteer")
+	case $BOARD in
+
+		"volteer")
+		;;
+
+		"eldrid")
+		;;
+
+		*)
+		echo -e "\n\e[1;6;31;47mError: Wrong BOARD !\033[0m\n"
+		exit
+		;;
+
+	esac
+	;;
+
+	"brya")
+	case $BOARD in
+
+		"brya")
+		;;
+
+		"gimble")
+		;;
+
+		"primus")
+		;;
+
+		"crota")
+		;;
+
+		*)
+		echo -e "\n\e[1;6;31;47mError: Wrong BOARD !\033[0m\n"
+		exit
+		;;
+
+	esac
+	;;
+
+	"brask")
+	case $BOARD in
+
+		"brask")
+		;;
+
+		"moli")
+		;;
+
+		*)
+		echo -e "\n\e[1;6;31;47mError: Wrong BOARD !\033[0m\n"
+		exit
+		;;
+
+	esac
+	;;
+
+	"nissa")
+	case $BOARD in
+
+		"nereid")
+		;;
+
+		"joxer")
+		;;
+
+		*)
+		echo -e "\n\e[1;6;31;47mError: Wrong BOARD !\033[0m\n"
+		exit
+		;;
+
+	esac
+	;;
+
+	*)
+	echo -e "\n\e[1;6;31;47mError: Wrong Project !\033[0m\n"
+	exit
+	;;
+
+esac
+
+OnlyMove(){
+
+	mkdir -v $SCRIPT_DIR/CPFE/$BOARD/$LLAS_VER
+	mv -v $CHOOSE_FILE $SCRIPT_DIR/CPFE/$BOARD/$LLAS_VER
+
+}
+
+UnzipTest(){
+	# tar -axvf ${CHOOSE_FILE} chromiumos_test_image.bin
+	if [[ -f "$SCRIPT_DIR/CPFE/$BOARD/$LLAS_VER/chromiumos_test_image.bin" ]]; then
+		echo -e "\n\033[0;92mAhoy! You already have !\nRemove it !\033[0m\n"
+		rm ${CHOOSE_FILE}
+		exit
+	else
+		mkdir -v $SCRIPT_DIR/CPFE/$BOARD/$LLAS_VER
+		printf "\033[0;94m"
+		# pv ${CHOOSE_FILE} | tar -C $SCRIPT_DIR/CPFE/$BOARD/$LLAS_VER -Jxv chromiumos_test_image.bin
+		pv ${CHOOSE_FILE} | tar -Ipixz -C $SCRIPT_DIR/CPFE/$BOARD/$LLAS_VER -xv chromiumos_test_image.bin
+		printf "\033[0m"
+
+		[[ $? -ne 0 ]] &&
+		echo -e "\n\e[1;6;31;47mERROR: No TEST_IMAGE_ARCHIVE found !\e[0m\n" && exit 1 ||
+
+		# mv -v chromiumos_test_image.bin $SCRIPT_DIR/CPFE/$BOARD/$LLAS_VER/
+		rm ${CHOOSE_FILE}
+	fi
+
+}
+
+UnzipFirmware(){
+	# tar -axvf ${CHOOSE_FILE} $BOARD/ec.bin image-$BOARD.serial.bin
+	# if
+	# [[ -f "$SCRIPT_DIR/CPFE/$BOARD/$LLAS_VER/ec.bin" ]] &&
+	# [[ -f "$SCRIPT_DIR/CPFE/$BOARD/$LLAS_VER/image-${BOARD}4es.serial.bin" ]] &&
+	# [[ -f "$SCRIPT_DIR/CPFE/$BOARD/$LLAS_VER/image-${BOARD}4es.bin" ]]; then
+	# 	echo -e "\n\033[0;92mAhoy! You already have !\nMOvE to 'already unzip'!\033[0m\n"
+	# 	mv -v ${CHOOSE_FILE} already\ unzip
+	# 	exit
+	if
+	[[ -f "$SCRIPT_DIR/CPFE/$BOARD/$LLAS_VER/ec.bin" ]] &&
+	[[ -f "$SCRIPT_DIR/CPFE/$BOARD/$LLAS_VER/image-$BOARD.serial.bin" ]] &&
+	[[ -f "$SCRIPT_DIR/CPFE/$BOARD/$LLAS_VER/image-$BOARD.bin" ]]; then
+		echo -e "\n\033[0;92mAhoy! You already have !\nRemove it !\033[0m\n"
+		rm ${CHOOSE_FILE}
+		exit
+	else
+		mkdir -v $SCRIPT_DIR/CPFE/$BOARD/$LLAS_VER
+		printf "\033[0;94m"
+		# pv ${CHOOSE_FILE} | tar -C $SCRIPT_DIR/CPFE/$BOARD/$LLAS_VER -jxv image-$BOARD.serial.bin image-${BOARD}4es.serial.bin image-$BOARD.bin image-${BOARD}4es.bin $BOARD/ec.bin
+		# pv ${CHOOSE_FILE} | tar -Ilbzip2 -C $SCRIPT_DIR/CPFE/$BOARD/$LLAS_VER -xv image-$BOARD.serial.bin image-${BOARD}4es.serial.bin image-$BOARD.bin image-${BOARD}4es.bin $BOARD/ec.bin
+		pv ${CHOOSE_FILE} | tar -Ilbzip2 -C $SCRIPT_DIR/CPFE/$BOARD/$LLAS_VER -xv image-$BOARD.serial.bin image-$BOARD.bin $BOARD/ec.bin
+		# [[ $? -eq 2 ]] &&
+		# echo -e "\033[0;31mMeans it is a old VERSION\033[0m\n" &&
+		# pv ${CHOOSE_FILE} | tar -C $SCRIPT_DIR/CPFE/$BOARD/$LLAS_VER -jxv image-$BOARD.serial.bin image-$BOARD.bin $BOARD/ec.bin
+		printf "\033[0m"
+
+		[[ $? -ne 0 ]] &&
+		echo -e "\n\e[1;6;31;47mERROR: No FIRMWARE_IMAGE_ARCHIVE found !\e[0m\n" && exit 1 ||
+		# mv -v $BOARD/ec.bin $SCRIPT_DIR/CPFE/$BOARD/$LLAS_VER/
+		# mv -v image-$BOARD.serial.bin $SCRIPT_DIR/CPFE/$BOARD/$LLAS_VER/
+		# mv -v image-$BOARD.bin $SCRIPT_DIR/CPFE/$BOARD/$LLAS_VER/
+		rm ${CHOOSE_FILE}
+		mv -v $SCRIPT_DIR/CPFE/$BOARD/$LLAS_VER/$BOARD/ec.bin $SCRIPT_DIR/CPFE/$BOARD/$LLAS_VER/ec.bin
+		rm -rv $SCRIPT_DIR/CPFE/$BOARD/$LLAS_VER/$BOARD
+		# rm -rv $BOARD
+	fi
+
+}
+
+case $TYPE in
+
+	"RECOVERY_IMAGE")
+	OnlyMove
+	;;
+
+	"HWQUAL_IMAGE_ARCHIVE")
+
+	;;
+
+	"FACTORY_IMAGE_ARCHIVE")
+
+	;;
+
+	"RELEASE_IMAGE_ARCHIVE")
+
+	;;
+
+	"FACTORY_IMAGE")
+	OnlyMove
+	;;
+
+	"TEST_IMAGE_ARCHIVE")
+	UnzipTest
+	;;
+
+	"FIRMWARE_IMAGE_ARCHIVE")
+	UnzipFirmware
+	;;
+
+	*)
+	echo -e "\n\e[1;6;31;47mERROR: Error Zip !\e[0m\n"
+	exit
+	;;
+
+esac
+
+# GetVer(){
+# 	echo $LLAS_VER
+# }
+
+# echo -e "Your Unzip\033[0;95m VRESION \033[0mis\033[0;92m $(GetVer) \033[0m"
+# ChromeOS-firmware-R96-14164.0.0-brya
+# tar -jxvf ChromeOS-firmware-R96-14164.0.0-brya.tar.bz2 gimble/ec.bin

@@ -1,0 +1,119 @@
+#!/bin/bash
+
+SCRIPT_DIR=$(cd $(dirname ${BASH_SOURCE[0]}); pwd)
+
+source $SCRIPT_DIR/config/AUF.config
+
+DUTIP=$1
+[[ $DUTIP = "" ]] && DUTIP=$($SCRIPT_DIR/get_IP_with_local_shared_computer)
+
+printf "You want SCP IP is \e[1;92m$DUTIP\e[0m\n"
+# printf "Please input your \e[1;96mBOARD\e[0m name: "
+# read BOARD
+# [[ $BOARD = "" ]]&& echo -e "\n\e[1;6;31;47mERROR: You need set BOARD !\e[0m\n" && exit 1
+BOARD=$2
+[[ $BOARD = "" ]]&& printf "Please input your \033[1;96mBOARD\033[0m name: "  && read BOARD
+
+# printf "Please input your \033[1;96mversion\033[0m name: "
+# read VERSION
+# [[ $VERSION = "" ]]&& echo -e "\n\e[1;6;31;47mERROR: You need set VERSION !\e[0m\n" && exit 1
+VERSION=$3
+[[ $VERSION = "" ]]&& printf "Please input your \033[1;96mversion\033[0m name: "  && read VERSION
+
+# LAST_VER=$(ls -v $SCRIPT_DIR/CPFE/$BOARD)
+# LAST_VER_T=(${LAST_VER/ ;/ })
+# LLAS=${LAST_VER_T[-2]}
+
+# cd $SCRIPT_DIR/CPFE/$BOARD/$LLAS/
+
+cd $SCRIPT_DIR/CPFE/$BOARD/$VERSION/
+
+[[ $? -eq 1 ]] &&
+echo -e "\n\e[1;6;31;47mERROR: Wrong BOARD or VERSION!\e[0m\n" && exit 1
+
+# printf "\n\e[0;92mINFO: You are in the board \e[1;33m$BOARD\e[0;92m vsersion \e[1;33m$LLAS\e[0;92m ! (dut)\n"
+printf "\n\e[0;92mINFO: You are in the board \e[1;33m$BOARD\e[0;92m vsersion \e[1;33m$VERSION\e[0;92m ! (dut)\n\n"
+
+Run_Scp(){
+/usr/bin/expect <<-EOF
+set timeout -1
+
+spawn scp image-${BOARD}4es.serial.bin image-${BOARD}4es.bin image-$BOARD.serial.bin image-$BOARD.bin ec.bin root@$DUTIP:$DUTDIR
+# spawn scp image-$BOARD.serial.bin image-$BOARD.bin ec.bin root@$DUTIP:$DUTDIR
+
+expect {
+  "assword" {
+    send $dut_password\r
+    exp_continue
+  }
+  "Are you sure" {
+    send yes\r
+    exp_continue
+  }
+  "WARNING:" {
+    exit 5
+  }
+  "Read-only" {
+    exit 154
+  }
+}
+
+EOF
+}
+
+Run_Scp
+
+case $? in
+  5 )
+    echo -e "\n\e[1;6;31;47mWARNING: REMOTE HOST IDENTIFICATION HAS CHANGED !\nSo DELETE /home/USER/.ssh\nIt's will be run again !\e[0m\n"
+    rm -rf /home/$(whoami)/.ssh/known_hosts
+    echo -e "\033[0;93m"
+    Run_Scp
+    echo -e "\033[0m"
+    echo -e "\n\e[0mSuccessd ! copy to : \e[1;31m$DUTDIR\e[0m .\n"
+  ;;
+
+  154 )
+    echo -e "\n\e[1;6;31;47mWARNING: rootFS NOT Writable ! \e[0m\n"
+
+/usr/bin/expect  <<-EOF
+set timeout -1
+spawn ssh root@$DUTIP
+expect {
+  "assword" {
+    send $dut_password\r
+    exp_continue
+  }
+  "Are you sure" {
+    send yes\r
+    exp_continue
+  }
+  "WARNING:" {
+    exit 5
+  }
+  "Read-only" {
+    exit 154
+  }
+  "localhost"
+}
+send "/usr/share/vboot/bin/make_dev_ssd.sh -f --remove_rootfs_verification\r"
+send "reboot\r"
+send "exit\r"
+expect eof
+EOF
+    Run_Scp
+    echo -e "\033[0m"
+    echo -e "\n\e[0mSuccessd ! copy to : \e[1;31m$DUTDIR\e[0m .\n"
+    # exit 1
+  ;;
+
+  0 )
+    echo -e "\n\e[0mSuccessd ! copy to : \e[1;31m$DUTDIR\e[0m .\n"
+  ;;
+esac
+
+GetPath(){
+  echo $DUTDIR
+}
+
+echo -e "Your Unzip\033[0;95m PATH \033[0mis\033[0;92m $(GetPath) \033[0m"

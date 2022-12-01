@@ -1,0 +1,235 @@
+#!/bin/bash
+
+SCRIPT_DIR=$(cd $(dirname ${BASH_SOURCE[0]}); pwd)
+
+source $SCRIPT_DIR/config/AUF.config
+
+# LAST_VER=$(ls -v $SCRIPT_DIR/CPFE/$BOARD)
+# LAST_VER_T=(${LAST_VER/ ;/ })
+# LLAS=${LAST_VER_T[-2]}
+# https://www.google.com/chromeos/partner/fe/image_download?version=14440.0.0&board=brya&channel=dev&type=FIRMWARE_IMAGE_ARCHIVE
+BOARD=$1
+GetVer=$2
+IsSeirial=$3
+
+
+FirstUnzip(){
+
+  source $SCRIPT_DIR/config/board_check.config $BOARD
+  printf "\033[0;94m"
+  UNZIP=$($SCRIPT_DIR/unzip_CPFE $BOARD)
+
+  [[ $? -ne 0 ]] &&
+  echo -e "\n\e[1;6;31;47mERROR: Something wrong (./unzip_CPFE) !\e[0m\n" &&
+  exit 1
+
+  printf "\033[0m"
+
+  UNZIP=(${UNZIP/ / })
+  UNZIP=(${UNZIP[11]})
+  GetVer=${UNZIP[-1]}
+}
+
+Run_SSH(){
+/usr/bin/expect <<-EOF
+set timeout 3
+spawn ssh root@$DUTIP
+expect {
+  "assword" {
+    send $dut_password\r
+    exp_continue
+  }
+  "Are you sure" {
+    send yes\r
+    exp_continue
+  }
+  "WARNING:" {
+    exit 5
+  }
+  "Read-only" {
+    exit 154
+  }
+  timeout {
+    exit 66
+  }
+  "localhost"
+}
+send "rm $DUTDIR/ec.bin $DUTDIR/image-*.bin\r"
+send "lscpu | grep 'Model name' | tee $DUTDIR/Model.tmp\r"
+send "exit\r"
+expect eof
+EOF
+}
+
+Run_SCP_Model(){
+/usr/bin/expect <<-EOF
+set timeout -1
+spawn scp root@$DUTIP:$DUTDIR/Model.tmp $SCRIPT_DIR
+expect {
+  "assword" {
+    send $dut_password\r
+    exp_continue
+  }
+}
+EOF
+}
+
+# printf "%s \033[1;6;33;45m 4es \033[0m CPU ? (Y/n)  " "-->"
+# read Is4es
+
+# if
+#   [[ $Is4es != "Y" ]] &&
+#   [[ $Is4es != "n" ]]; then
+#     echo -e "\n\e[1;6;31;47mERROR: mERROR: Only Y or n !\e[0m\n" && exit 1
+# fi
+if
+	[[ -f "$SCRIPT_DIR/CPFE/$BOARD/$GetVer/ec.bin" ]] &&
+	[[ -f "$SCRIPT_DIR/CPFE/$BOARD/$GetVer/image-$BOARD.serial.bin" ]] &&
+	[[ -f "$SCRIPT_DIR/CPFE/$BOARD/$GetVer/image-$BOARD.bin" ]]; then
+		echo -e "\n\033[0;92mAhoy! You already have \033[0;95m$GetVer\033[0;92m !\033[0m\n"
+else
+  source $SCRIPT_DIR/config/board_change_to_baseboard.config $BOARD
+
+  echo -e "\nDefault download\033[0;93m DEV Channel \033[0mfirmware."
+  python $SCRIPT_DIR/get_CPFE_file.py $BASEBOARD FIRMWARE_IMAGE_ARCHIVE dev $GetVer
+
+  [[ $? -ne 0 ]] &&
+  echo -e "\n\e[1;6;31;47mERROR: Something wrong (Error 404) !\e[0m\n" &&
+  exit 1
+
+  FirstUnzip
+  # [[ $# -ne 2 ]] && FirstUnzip
+fi
+
+echo -e "\nYour Unzip\033[0;95m VRESION \033[0mis\033[0;92m $GetVer \033[0m"
+echo -e "\n\033[1;36m--------------------------------------------------------------\033[0m\n"
+
+Run_SSH
+
+case $? in
+  5 )
+    echo -e "\n\e[1;6;31;47mWARNING: REMOTE HOST IDENTIFICATION HAS CHANGED !\nSo DELETE /home/USER/.ssh\nIt's will be run again !\e[0m\n"
+    rm -rf /home/$(whoami)/.ssh/known_hosts
+    echo -e "\033[0;93m"
+    Run_SSH
+    echo -e "\033[0m"
+    echo -e "\033[1;32mOKOK !\033[0m\n"
+  ;;
+
+  154 )
+    echo -e "\n\e[1;6;31;47mWARNING: rootFS NOT Writable ! \e[0m\n"
+
+/usr/bin/expect  <<-EOF
+set timeout -1
+spawn ssh root@$DUTIP
+expect {
+  "assword" {
+    send $dut_password\r
+    exp_continue
+  }
+  "Are you sure" {
+    send yes\r
+    exp_continue
+  }
+  "WARNING:" {
+    exit 5
+  }
+  "Read-only" {
+    exit 154
+  }
+  "localhost"
+}
+send "/usr/share/vboot/bin/make_dev_ssd.sh -f --remove_rootfs_verification\r"
+send "reboot\r"
+send "exit\r"
+expect eof
+EOF
+    Run_SSH
+    echo -e "\033[0m"
+    echo -e "\n\033[1;32mOKOK !\033[0m\n"
+    # exit 1
+  ;;
+
+  66 )
+    echo -e "\n\e[1;6;31;47mERROR: SSH timeout ! Please check AUF.config !!! \e[0m\n" &&
+    exit 1
+  ;;
+
+  0 )
+    echo -e "\n\033[1;32mOKOK !\033[0m\n"
+  ;;
+esac
+
+Run_SCP_Model
+log_tmp=$(<$SCRIPT_DIR/Model.tmp)
+Model_name="${log_tmp##* }"
+
+printf "\nYour cpu is %s \033[1;6;33;45m $Model_name \033[0m \n\n" "-->"
+
+
+[[ $Model_name != "0000" ]] && Is4es="n" || Is4es="Y"
+rm $SCRIPT_DIR/Model.tmp
+
+
+echo -e "\033[1;36m--------------------------------------------------------------\033[0m"
+
+GGPATH=$($SCRIPT_DIR/scp_to_IP $DUTIP $BOARD $GetVer)
+[[ $? -ne 0 ]] &&
+echo -e "\n\e[1;6;31;47mERROR: Something wrong (./scp_to_IP) !\e[0m\n" &&
+exit 1
+
+GGPATH=(${GGPATH/ / })
+GetPath=${GGPATH[-2]}
+
+echo -e "\n\033[0;92mWait A Minute, Who Are You ? \033[0m\n"
+
+
+/usr/bin/expect <<-EOF
+set timeout -1
+spawn ssh root@$DUTIP
+expect {
+  "assword" {
+    send $dut_password\r
+    exp_continue
+  }
+  "localhost"
+}
+
+send "rm $DUTDIR/Model.tmp\r"
+send "cd $GetPath\r"
+
+if { "$Is4es" == "Y" } {
+  if { "$IsSeirial" == "Y" } {
+    send "futility update --force -i image-${BOARD}4es.serial.bin -e ec.bin\r"
+  } else {
+    send "futility update --force -i image-${BOARD}4es.bin -e ec.bin\r"
+  }
+} elseif { "$Is4es" == "n" } {
+  if { "$IsSeirial" == "Y" } {
+    send "futility update --force --fast -i image-$BOARD.serial.bin -e ec.bin\r"
+    # send "flashrom -p host -w image-$BOARD.serial.bin -i RW_SECTION_A -i RW_SECTION_B -i RW_SHARED\r"
+  } else {
+    send "futility update --force --fast -i image-$BOARD.bin -e ec.bin\r"
+    # send "flashrom -p host -w image-$BOARD.bin -i RW_SECTION_A -i RW_SECTION_B -i RW_SHARED\r"
+  }
+} else {
+  puts "ERROR!!!"
+  exit 70
+}
+
+# send "flashrom -n -p ec -w ec.bin\r"
+send "ectool reboot_ec cold; exit\r"
+expect eof
+EOF
+
+case $? in
+  70 )
+    echo -e "\n\e[1;6;31;47mERROR: Choose wrong !\e[0m\n" &&
+    exit 1
+  ;;
+
+  0 )
+    echo -e "\n\n\033[0;6;92;46mSuccess and waiting DUT reboot!\033[0m\n\n"
+  ;;
+esac
+
