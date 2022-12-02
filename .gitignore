@@ -1,0 +1,12 @@
+.gitignore
+
+config/AUF.config
+CPFE/*
+CPFE_Downloads/*
+GoogleProfile/*
+
+# VSCode IDE
+.vscode/*
+!.vscode/README.md
+!.vscode/settings.json.default
+*.code-workspace
