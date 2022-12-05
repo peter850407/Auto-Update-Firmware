@@ -21,17 +21,17 @@ chmod +x *
 sudo apt install expect pv python3-pip
 pip install selenium
 
-mkdir -v CPFE_Downloads
-mkdir -v CPFE
-cd CPFE
-mkdir -v volteer
-mkdir -v eldrid
-mkdir -v brya
-mkdir -v gimble
-mkdir -v primus
-mkdir -v crota
-mkdir -v brask
-mkdir -v moli
-mkdir -v nissa_ite
-mkdir -v nereid
-mkdir -v joxer
+mkdir -v $SCRIPT_DIR/CPFE_Downloads
+mkdir -v $SCRIPT_DIR/CPFE
+cd $SCRIPT_DIR/CPFE
+mkdir -v $SCRIPT_DIR/CPFE/volteer
+mkdir -v $SCRIPT_DIR/CPFE/eldrid
+mkdir -v $SCRIPT_DIR/CPFE/brya
+mkdir -v $SCRIPT_DIR/CPFE/gimble
+mkdir -v $SCRIPT_DIR/CPFE/primus
+mkdir -v $SCRIPT_DIR/CPFE/crota
+mkdir -v $SCRIPT_DIR/CPFE/brask
+mkdir -v $SCRIPT_DIR/CPFE/moli
+mkdir -v $SCRIPT_DIR/CPFE/nissa_ite
+mkdir -v $SCRIPT_DIR/CPFE/nereid
+mkdir -v $SCRIPT_DIR/CPFE/joxer

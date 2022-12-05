@@ -2,7 +2,7 @@
 
 SCRIPT_DIR=$(cd $(dirname ${BASH_SOURCE[0]}); pwd)
 
-cd CPFE_Downloads
+cd $SCRIPT_DIR/CPFE_Downloads
 
 ALL_FILE=$(ls -1 -F | grep -v [/$])
 
