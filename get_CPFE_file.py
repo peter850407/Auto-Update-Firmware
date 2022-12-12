@@ -4,8 +4,7 @@ from selenium.webdriver.common.by import By
 # from selenium.webdriver.support.select import Select
 # from selenium.webdriver.chrome.service import Service
 
-import sys,time,glob
-
+import glob,os,sys,time
 
 # BOARD = ["brask", "brya" , "etc."]
 # ImageType = ["FIRMWARE_IMAGE_ARCHIVE", "TEST_IMAGE_ARCHIVE", "etc."]
@@ -30,7 +29,7 @@ except IndexError as e:
 	time.sleep(666)
 	exit()
 
-download_dir = "./CPFE_Downloads"
+download_dir = os.path.abspath(os.getcwd())+"/CPFE_Downloads"
 
 """ check file is already in storage """
 if glob.glob(download_dir + "/ChromeOS-firmware-*" + setVersion_prefix + "*.tar.bz2"):
@@ -50,7 +49,7 @@ options.add_experimental_option("prefs", {
 
 """ adding specific command """
 options.add_argument("user-data-dir=./GoogleProfile")    # Local Chrome Profile Path
-options.add_argument("headless")    # Hide browser
+# options.add_argument("headless")    # Hide browser
 options.add_argument("disable-gpu")    # Disable gpu to avoid Mesa-library
 # options.add_argument("remote-debugging-port=9222")
 options.add_argument("enable-features=WebContentsForceDark")    # Dark mode
@@ -70,6 +69,9 @@ driver = webdriver.Chrome(options = options)
 # """ minimize browser """
 # driver.minimize_window()
 
+# """ change browser window size """
+# driver.set_window_size(1, 1)
+
 ################################################################################
 #                                     MAIN                                     #
 ################################################################################
@@ -83,7 +85,6 @@ driver.get("https://www.google.com/chromeos/partner/fe/image_download?board="
  + "&version=" + setVersion_prefix)
 
 # time.sleep(3)
-
 # Board = driver.find_element(By.XPATH, "(//select[@class='NCY5R1C-H-g'])[1]")
 # Select(Board).select_by_value(selectBoard)
 
@@ -113,12 +114,32 @@ try:
 		driver.quit()
 		exit(1)
 except Exception as exception:
-	min = -0.5
-	while not glob.glob(download_dir + "/ChromeOS-firmware-*" + setVersion_prefix + "*.tar.bz2"):
-		min += 0.5
-		print("File download is not completed ... (" + str(min) + " min)")
-		time.sleep(30)
-	print("\nFile download is completed !!!     (" + str(min + 0.5) + " min)\n")
+	# min = -0.5
+	# while not glob.glob(download_dir + "/ChromeOS-firmware-*" + setVersion_prefix + "*.tar.bz2"):
+	# 	min += 0.5
+	# 	print("File download is not completed ... (" + str(min) + " min)")
+	# 	time.sleep(30)
+	# print("\nFile download is completed !!!     (" + str(min + 0.5) + " min)\n")
+	shadow_content = " "
 
-	#close browser
+	driver.get("chrome://downloads/")
+	driver.minimize_window()
+	print()
+	while shadow_content != "":
+		time.sleep(0.5)
+		shadow_host1 = driver.find_element(By.TAG_NAME, "downloads-manager")
+		shadow_root1 = shadow_host1.shadow_root
+
+		mainContainer = shadow_root1.find_element(By.ID, "mainContainer")
+
+		shadow_host2 = mainContainer.find_element(By.TAG_NAME, "downloads-item")
+		shadow_root2 = shadow_host2.shadow_root
+
+		shadow_content = shadow_root2.find_element(By.ID, "description").text
+
+		print(shadow_content, end="\r")
+	os.system("notify-send 'File Download Finished!'")
+	print("\nFile Download Finished!!")
+
+	""" close browser """
 	driver.quit()
