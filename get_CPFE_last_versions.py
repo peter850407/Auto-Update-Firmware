@@ -57,36 +57,54 @@ driver = webdriver.Chrome(options = options)
 #                                     MAIN                                     #
 ################################################################################
 
-""" launch URL """
-driver.get("https://www.google.com/chromeos/partner/fe/#release")
+# driver.get("https://www.google.com/chromeos/partner/fe/#release")
+driver.get("https://www.google.com/chromeos/partner/fe/#release:board="
+ + selectBoard
+ + "&channel=" + selectChannel
+ + "&type=" + selectImageType
+ + "&ver=" + setVersion_prefix)
 
 print("Now Loading... Now Loading... Now Loading...")
 
-time.sleep(3)
-Board = driver.find_element(By.XPATH, "(//select[@class='NCY5R1C-H-g'])[1]")
-Select(Board).select_by_value(selectBoard)
+# time.sleep(3)
+# Board = driver.find_element(By.XPATH, "(//select[@class='NCY5R1C-H-g'])[1]")
+# Select(Board).select_by_value(selectBoard)
 
-Image_Type = driver.find_element(By.XPATH, "(//select[@class='NCY5R1C-H-g'])[2]")
-Select(Image_Type).select_by_value(selectImageType)
+# Image_Type = driver.find_element(By.XPATH, "(//select[@class='NCY5R1C-H-g'])[2]")
+# Select(Image_Type).select_by_value(selectImageType)
 
-Channel = driver.find_element(By.XPATH, "(//select[@class='NCY5R1C-H-g'])[3]")
-Select(Channel).select_by_value(selectChannel)
+# Channel = driver.find_element(By.XPATH, "(//select[@class='NCY5R1C-H-g'])[3]")
+# Select(Channel).select_by_value(selectChannel)
 
-Version_prefix = driver.find_element(By.XPATH, "(//input[@type='text'][@class='NCY5R1C-H-h'])[2]")
-Version_prefix.send_keys(setVersion_prefix)
+# Version_prefix = driver.find_element(By.XPATH, "(//input[@type='text'][@class='NCY5R1C-H-h'])[2]")
+# Version_prefix.send_keys(setVersion_prefix)
 
-Search = driver.find_element(By.CLASS_NAME, "NCY5R1C-H-c")
-Search.click()
+# Search = driver.find_element(By.CLASS_NAME, "NCY5R1C-H-c")
+# Search.click()
 
-time.sleep(5)
-print("\n\033[96m\033[1mVersion\033[0m")
+
+# time.sleep(5)
+driver.implicitly_wait(10)
 # Version = driver.find_elements(By.XPATH, "(//td[contains(@class, 'NCY5R1C-d-d')])")
 Version = driver.find_elements(By.CLASS_NAME, "NCY5R1C-d-d")
 
+""" No version founded """
+if Version == []:
+	print("\n\033[96m\033[1mVersion\033[0m not found!\n")
+	driver.quit()
+	exit()
+
+print("\n\033[96m\033[1mVersion\033[0m")
+
 num = 0
 for i in Version:
+	""" Avoid null row """
+	if i.text == "":
+		continue
+
+	""" Print version every 5 items """
 	num += 1
-	print("\033[95m\033[1m" + "%3s" % (str(num) + "."), end=" ")
+	print("\033[95m\033[1m" + "%3s" % (str(num) + ".") + "\033[0m", end=" ")
 	print("\033[92m" + i.text + "\033[0m", end="\t")
 	if num % 5 == 0:
 		print()
