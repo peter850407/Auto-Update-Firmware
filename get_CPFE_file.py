@@ -69,8 +69,11 @@ driver = webdriver.Chrome(options = options)
 # """ minimize browser """
 # driver.minimize_window()
 
-# """ change browser window size """
-# driver.set_window_size(1, 1)
+""" change browser window size """
+driver.set_window_size(500, 500)
+
+""" set window position """
+driver.set_window_position(0, 0, windowHandle ='current')
 
 ################################################################################
 #                                     MAIN                                     #
@@ -127,6 +130,7 @@ except Exception as exception:
 	print()
 	while shadow_content != "":
 		time.sleep(0.5)
+
 		shadow_host1 = driver.find_element(By.TAG_NAME, "downloads-manager")
 		shadow_root1 = shadow_host1.shadow_root
 
@@ -138,8 +142,9 @@ except Exception as exception:
 		shadow_content = shadow_root2.find_element(By.ID, "description").text
 
 		print(shadow_content, end="\r")
+
 	os.system("notify-send 'File Download Finished!'")
-	print("\nFile Download Finished!!")
+	print("\nFile Download Finished!!\n")
 
 	""" close browser """
 	driver.quit()

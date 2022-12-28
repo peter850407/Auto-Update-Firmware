@@ -25,9 +25,9 @@ FirstUnzip(){
 
   printf "\033[0m"
 
-  UNZIP=(${UNZIP/ / })
-  UNZIP=(${UNZIP[11]})
-  GetVer=${UNZIP[-1]}
+  # UNZIP=(${UNZIP/ / })
+  # UNZIP=(${UNZIP[11]})
+  # GetVer=${UNZIP[-1]}
 }
 
 Run_SSH(){
