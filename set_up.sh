@@ -14,7 +14,21 @@ read choose
 
 printf "輸入\033[0;93mDUT\033[0m的\033[0;93mIP\033[0m: "
 read IP
-sed -i "2c \  DUTIP=$IP" config/AUF.config
+touch config/AUF.config
+
+tee config/AUF.config <<EOF
+#----------------------------------------#
+  DUTIP=$IP
+#----------------------------------------#
+  DUTDIR=/home
+#----------------------------------------#
+  PORT=9999
+#----------------------------------------#
+  dut_password=test0000
+#----------------------------------------#
+EOF
+# sed -i "2c \  DUTIP=$IP" config/AUF.config
+echo
 
 chmod +x *
 
