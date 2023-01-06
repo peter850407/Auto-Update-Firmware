@@ -29,10 +29,16 @@ except IndexError as e:
 	time.sleep(666)
 	exit()
 
+print("Download \033[93m"
+ + selectBoard + " "
+ + selectImageType + " \""
+ + selectChannel.upper() + " Channel\" "
+ + setVersion_prefix + "\033[0m")
+
 download_dir = os.path.abspath(os.getcwd())+"/CPFE_Downloads"
 
 """ check file is already in storage """
-if glob.glob(download_dir + "/ChromeOS-firmware-*" + setVersion_prefix + "*.tar.bz2"):
+if glob.glob(download_dir + "/ChromeOS-*" + setVersion_prefix + "*.tar.*"):
 	print("File is in storage !!!")
 	exit()
 
@@ -48,11 +54,11 @@ options.add_experimental_option("prefs", {
 })
 
 """ adding specific command """
-options.add_argument("user-data-dir=./GoogleProfile")    # Local Chrome Profile Path
-# options.add_argument("headless")    # Hide browser
-options.add_argument("disable-gpu")    # Disable gpu to avoid Mesa-library
+options.add_argument("user-data-dir=./GoogleProfile")	# Local Chrome Profile Path
+# options.add_argument("headless")		# Hide browser
+options.add_argument("disable-gpu")		# Disable gpu to avoid Mesa-library
 # options.add_argument("remote-debugging-port=9222")
-options.add_argument("enable-features=WebContentsForceDark")    # Dark mode
+options.add_argument("enable-features=WebContentsForceDark")	# Dark mode
 # options.debugger_address='127.0.0.1:9222'
 # options.add_experimental_option("debuggerAddress", "127.0.0.1:9222")
 

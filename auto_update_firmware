@@ -90,7 +90,10 @@ if
 else
   source $SCRIPT_DIR/config/board_change_to_baseboard.config $BOARD
 
-  echo -e "\nDefault download\033[0;93m DEV Channel \033[0mfirmware."
+  # BOARD = ["brask", "brya" , "etc."]
+  # ImageType = ["FIRMWARE_IMAGE_ARCHIVE", "TEST_IMAGE_ARCHIVE", "etc."]
+  # Channel = ["beta", "canary", "dev", "stable"]
+
   python $SCRIPT_DIR/get_CPFE_file.py $BASEBOARD FIRMWARE_IMAGE_ARCHIVE dev $GetVer
 
   [[ $? -ne 0 ]] &&
