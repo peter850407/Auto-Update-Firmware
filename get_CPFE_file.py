@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
@@ -59,6 +61,7 @@ options.add_argument("user-data-dir=./GoogleProfile")	# Local Chrome Profile Pat
 options.add_argument("disable-gpu")		# Disable gpu to avoid Mesa-library
 # options.add_argument("remote-debugging-port=9222")
 options.add_argument("enable-features=WebContentsForceDark")	# Dark mode
+options.add_argument("blink-settings=imagesEnabled=false")	# Block image
 # options.debugger_address='127.0.0.1:9222'
 # options.add_experimental_option("debuggerAddress", "127.0.0.1:9222")
 
@@ -113,16 +116,17 @@ driver.get("https://www.google.com/chromeos/partner/fe/image_download?board="
 
 # Filename = driver.find_element(By.XPATH, "(//a[@class='gwt-Anchor'])")
 # Filename.click()
-
 print("Now Loading... Now Loading... Now Loading...")
 
 try:
 	""" Not Found  Error 404 """
-	if driver.find_element(By.TAG_NAME, "h1").text == "Not Found":
-		print("\nFile Not Found!!! Please check version and try again!")
+	Error = driver.find_element(By.TAG_NAME, "h1").text
+	print("\n\033[1;97m" + Error + "\033[0m")
+	if Error == "Not Found" or Error == "The requested file was not found.":
+		print("File Not Found!!! Please check version and try again!")
 		driver.quit()
 		exit(1)
-except Exception as exception:
+except Exception as e:
 	# min = -0.5
 	# while not glob.glob(download_dir + "/ChromeOS-firmware-*" + setVersion_prefix + "*.tar.bz2"):
 	# 	min += 0.5

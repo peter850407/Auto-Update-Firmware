@@ -94,7 +94,7 @@ else
   # ImageType = ["FIRMWARE_IMAGE_ARCHIVE", "TEST_IMAGE_ARCHIVE", "etc."]
   # Channel = ["beta", "canary", "dev", "stable"]
 
-  python $SCRIPT_DIR/get_CPFE_file.py $BASEBOARD FIRMWARE_IMAGE_ARCHIVE dev $GetVer
+  $SCRIPT_DIR/get_CPFE_file.py $BASEBOARD FIRMWARE_IMAGE_ARCHIVE dev $GetVer
 
   [[ $? -ne 0 ]] &&
   echo -e "\n\e[1;6;31;47mERROR: Something wrong (Error 404) !\e[0m\n" &&
