@@ -30,7 +30,8 @@ EOF
 # sed -i "2c \  DUTIP=$IP" config/AUF.config
 echo
 
-chmod +x -R ./*
+chmod +x *
+chmod +x config/*
 
 sudo apt install expect pv python3-pip
 pip install --upgrade selenium
