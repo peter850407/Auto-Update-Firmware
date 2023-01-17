@@ -5,11 +5,12 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 # from selenium.webdriver.support.select import Select
 
-import sys,time
+import subprocess,sys,time
 
 # BOARD = ["brask", "brya" , "etc."]
 # ImageType = ["FIRMWARE_IMAGE_ARCHIVE", "TEST_IMAGE_ARCHIVE", "etc."]
 # Channel = ["beta", "canary", "dev", "stable"]
+
 
 try:
 	selectBoard = sys.argv[1]
@@ -18,6 +19,14 @@ except IndexError as e:
 	setVersion_prefix = ""
 selectImageType = "FIRMWARE_IMAGE_ARCHIVE"
 selectChannel = "dev"
+
+p = subprocess.run(["./config/board_change_to_baseboard.config", selectBoard],
+stdout=subprocess.PIPE)
+selectBoard = p.stdout.decode('utf-8')
+
+if p.returncode == 66:
+	print(selectBoard)
+	exit(66)
 
 print("Search \033[93m"
  + selectBoard + " "

@@ -30,10 +30,10 @@ EOF
 # sed -i "2c \  DUTIP=$IP" config/AUF.config
 echo
 
-chmod +x *
+chmod +x -R ./*
 
 sudo apt install expect pv python3-pip
-pip install selenium
+pip install --upgrade selenium
 
 mkdir -v $SCRIPT_DIR/CPFE_Downloads
 mkdir -v $SCRIPT_DIR/CPFE

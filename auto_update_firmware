@@ -88,15 +88,16 @@ if
 	[[ -f "$SCRIPT_DIR/CPFE/$BOARD/$GetVer/image-$BOARD.bin" ]]; then
 		echo -e "\n\033[0;92mAhoy! You already have \033[0;95m$GetVer\033[0;92m !\033[0m\n"
 else
-  source $SCRIPT_DIR/config/board_change_to_baseboard.config $BOARD
-
   # BOARD = ["brask", "brya" , "etc."]
   # ImageType = ["FIRMWARE_IMAGE_ARCHIVE", "TEST_IMAGE_ARCHIVE", "etc."]
   # Channel = ["beta", "canary", "dev", "stable"]
 
-  $SCRIPT_DIR/get_CPFE_file.py $BASEBOARD FIRMWARE_IMAGE_ARCHIVE dev $GetVer
+  $SCRIPT_DIR/get_CPFE_file.py $BOARD FIRMWARE_IMAGE_ARCHIVE dev $GetVer
+  ERROR_CODE=$?
 
-  [[ $? -ne 0 ]] &&
+  [[ $ERROR_CODE -eq 66 ]] && exit 1
+
+  [[ $ERROR_CODE -eq 44 ]] &&
   echo -e "\n\e[1;6;31;47mERROR: Something wrong (Error 404) !\e[0m\n" &&
   exit 1
 

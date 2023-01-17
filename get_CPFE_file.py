@@ -6,7 +6,7 @@ from selenium.webdriver.common.by import By
 # from selenium.webdriver.support.select import Select
 # from selenium.webdriver.chrome.service import Service
 
-import glob,os,sys,time
+import glob,os,subprocess,sys,time
 
 # BOARD = ["brask", "brya" , "etc."]
 # ImageType = ["FIRMWARE_IMAGE_ARCHIVE", "TEST_IMAGE_ARCHIVE", "etc."]
@@ -30,6 +30,14 @@ except IndexError as e:
 	driver.get("https://accounts.google.com/")
 	time.sleep(666)
 	exit()
+
+p = subprocess.run(["./config/board_change_to_baseboard.config", selectBoard],
+stdout=subprocess.PIPE)
+selectBoard = p.stdout.decode('utf-8')
+
+if p.returncode == 66:
+	print(selectBoard)
+	exit(66)
 
 print("Download \033[93m"
  + selectBoard + " "
@@ -125,7 +133,7 @@ try:
 	if Error == "Not Found" or Error == "The requested file was not found.":
 		print("File Not Found!!! Please check version and try again!")
 		driver.quit()
-		exit(1)
+		exit(44)
 except Exception as e:
 	# min = -0.5
 	# while not glob.glob(download_dir + "/ChromeOS-firmware-*" + setVersion_prefix + "*.tar.bz2"):
